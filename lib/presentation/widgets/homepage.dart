@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:anuvad_app/presentation/cubits/bluetooth_connectivity_cubit.dart';
 import 'package:anuvad_app/presentation/cubits/bluetooth_scan_cubit.dart';
+import 'package:anuvad_app/presentation/cubits/instrument_cubit.dart';
 import 'package:anuvad_app/presentation/cubits/midi_connection_cubit.dart';
 import 'package:anuvad_app/presentation/widgets/common_components/app_bar.dart';
 import 'package:flutter/material.dart';
@@ -37,14 +38,19 @@ class _HomePageState extends State<HomePage> {
             switch (state) {
               case BluetoothState.poweredOn:
                 timer?.cancel();
+                Future.delayed(const Duration(seconds: 5),(){
+                  timer?.cancel();
+                });
                 BlocProvider.of<BluetoothScanCubit>(context)
                     .scanForBluetoothDevices();
                 BlocProvider.of<BluetoothScanCubit>(context)
                     .fetchBluetoothDevices();
                 timer = Timer.periodic(
-                  const Duration(seconds: 10),
-                  (Timer t) => BlocProvider.of<BluetoothScanCubit>(context)
-                      .fetchBluetoothDevices(),
+                  const Duration(milliseconds: 1000),
+                  (Timer t) {
+                    BlocProvider.of<BluetoothScanCubit>(context)
+                        .fetchBluetoothDevices();
+                  },
                 );
                 return const FoundDevicesWidget();
               case BluetoothState.poweredOff:
@@ -111,7 +117,8 @@ class FoundDevicesWidget extends StatelessWidget {
 class BottomTextWidget extends StatelessWidget {
   final String text;
   final double fontSize;
-  const BottomTextWidget({Key? key,required this.text,this.fontSize = 23}) : super(key: key);
+  const BottomTextWidget({Key? key, required this.text, this.fontSize = 23})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -121,14 +128,14 @@ class BottomTextWidget extends StatelessWidget {
         child: Text(
           text,
           style: GoogleFonts.poppins(
-            color: Colors.black,
-              fontSize: fontSize, fontWeight: FontWeight.w200),
+              color: Colors.black,
+              fontSize: fontSize,
+              fontWeight: FontWeight.w200),
         ),
       ),
     );
   }
 }
-
 
 class MidiDeviceTile extends StatelessWidget {
   final MidiDevice midiDevice;
@@ -144,19 +151,45 @@ class MidiDeviceTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
         child: SizedBox(
             width: MediaQuery.of(context).size.width,
-            child: Row(
+            child: Column(
               children: [
-                SizedBox(width: 25, child: Image.asset("assets/images/p1.png")),
-                const SizedBox(
-                  width: 20,
+                Row(
+                  children: [
+                    SizedBox(
+                        width: 25, child: Image.asset("assets/images/p1.png")),
+                    const SizedBox(
+                      width: 20,
+                    ),
+                    Text(
+                      midiDevice.name,
+                      style: GoogleFonts.poppins(
+                          fontSize: 17, fontWeight: FontWeight.w300),
+                      maxLines: 1,
+                      overflow: TextOverflow.fade,
+                    )
+                  ],
                 ),
                 Text(
-                  midiDevice.name,
+                  midiDevice.id,
                   style: GoogleFonts.poppins(
-                      fontSize: 17, fontWeight: FontWeight.w300),
+                      fontSize: 12, fontWeight: FontWeight.w200),
                   maxLines: 1,
                   overflow: TextOverflow.fade,
-                )
+                ),
+                Text(
+                  midiDevice.type,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, fontWeight: FontWeight.w200),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                ),
+                Text(
+                  midiDevice.connected.toString(),
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, fontWeight: FontWeight.w200),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                ),
               ],
             )),
       ),
@@ -231,7 +264,7 @@ class _ConnectSheetWidgetState extends State<ConnectSheetWidget> {
         ),
         FrameTitle(title: widget.midiDevice.name),
         const SizedBox(
-          height: 40,
+          height: 20,
         ),
         if (state != MidiConnectionState.connected) ...[
           const FrameImage(),
@@ -259,7 +292,11 @@ class _ConnectSheetWidgetState extends State<ConnectSheetWidget> {
 class InstrumentListWidget extends StatelessWidget {
   InstrumentListWidget({Key? key}) : super(key: key);
 
-  final List<String> instruments = ["guitar", "piano", "sitar"];
+  final List<Instrument> instruments = [
+    Instrument.guitar,
+    Instrument.piano,
+    Instrument.sitar
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +312,7 @@ class InstrumentListWidget extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             return InstrumentTile(
-              imageFileName: instruments[index],
+              instrument: instruments[index],
             );
           },
         ),
@@ -285,9 +322,8 @@ class InstrumentListWidget extends StatelessWidget {
 }
 
 class InstrumentTile extends StatelessWidget {
-  final String imageFileName;
-  const InstrumentTile({Key? key, required this.imageFileName})
-      : super(key: key);
+  final Instrument instrument;
+  const InstrumentTile({Key? key, required this.instrument}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -295,8 +331,13 @@ class InstrumentTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) =>  FramePage(midiDevice: BlocProvider.of<MidiConnectionCubit>(context).midiDevice,instrumentName: imageFileName,)));
+        BlocProvider.of<InstrumentCubit>(context).use(instrument);
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => FramePage(
+                  midiDevice:
+                      BlocProvider.of<MidiConnectionCubit>(context).midiDevice,
+                  instrumentName: instrument.name,
+                )));
       },
       child: Container(
         decoration: BoxDecoration(
@@ -307,12 +348,12 @@ class InstrumentTile extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/$imageFileName.png"),
+            Image.asset("assets/images/${instrument.name}.png"),
             const SizedBox(
               width: 20,
             ),
             Text(
-              imageFileName,
+              instrument.name,
               style: GoogleFonts.poppins(
                   fontSize: 24, fontWeight: FontWeight.w300),
             )
@@ -326,7 +367,9 @@ class InstrumentTile extends StatelessWidget {
 class FramePage extends StatefulWidget {
   final MidiDevice midiDevice;
   final String instrumentName;
-  const FramePage({Key? key,required this.midiDevice,required this.instrumentName}) : super(key: key);
+  const FramePage(
+      {Key? key, required this.midiDevice, required this.instrumentName})
+      : super(key: key);
 
   @override
   State<FramePage> createState() => _FramePageState();
@@ -336,29 +379,35 @@ class _FramePageState extends State<FramePage> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          const SizedBox(height: 10,),
-          FrameTitle( title: widget.midiDevice.name,),
-
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                SizedBox(height: 300,
-                  child:Image.asset("assets/images/frame_active.png"),),
-
-                BottomTextWidget(text: widget.instrumentName[0].toUpperCase()+widget.instrumentName.substring(1),fontSize: 36,)
-              ],
-            ),
-          )
-
-        ],
-      )
-    );
+        child: Column(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        const SizedBox(
+          height: 10,
+        ),
+        FrameTitle(
+          title: widget.midiDevice.name,
+        ),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              SizedBox(
+                height: 300,
+                child: Image.asset("assets/images/frame_active.png"),
+              ),
+              BottomTextWidget(
+                text: widget.instrumentName[0].toUpperCase() +
+                    widget.instrumentName.substring(1),
+                fontSize: 36,
+              )
+            ],
+          ),
+        )
+      ],
+    ));
   }
 }
 

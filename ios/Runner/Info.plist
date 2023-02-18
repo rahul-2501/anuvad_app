@@ -51,7 +51,5 @@
 		<false/>
 		<key>NSBluetoothAlwaysUsageDescription</key>
         <string>Our app uses bluetooth to find and connect to MIDI devices</string>
-        <key>NSLocalNetworkUsageDescription</key>
-        <string>This app requires access to the local network in order to communicate with other devices on the same network for file sharing purposes.</string>
 	</dict>
 </plist>
