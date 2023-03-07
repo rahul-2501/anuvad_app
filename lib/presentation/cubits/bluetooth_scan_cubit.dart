@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anuvad_app/midi_handler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
@@ -11,17 +13,40 @@ class BluetoothScanCubit extends Cubit<List<MidiDevice>> {
   List<MidiDevice> foundDevices = [];
   BluetoothScanCubit() : super([]);
   MidiHandler midiHandler = MidiHandler();
+  Timer? timer;
+
   Future<void> scanForBluetoothDevices() async{
     await midiHandler.midi.waitUntilBluetoothIsInitialized().then((value) {
-
       midiHandler.midi.startScanningForBluetoothDevices();
     }).timeout(const Duration(seconds: 5));
   }
 
   void fetchBluetoothDevices() async {
-    midiHandler.midi.teardown();
     final devices = await midiHandler.midi.devices;
-    foundDevices = devices ?? [];
+    if(devices != null){
+      foundDevices = devices;
+    }
     emit(foundDevices);
   }
+
+  reset() async {
+    MidiHandler midiHandler = MidiHandler();
+     midiHandler.midi.stopScanningForBluetoothDevices();
+     timer?.cancel();
+     midiHandler.midi.teardown();
+     await scanForBluetoothDevices();
+     timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+       fetchBluetoothDevices();
+     });
+     Future.delayed(const Duration(seconds: 20), () {
+       timer?.cancel();
+       midiHandler.midi.stopScanningForBluetoothDevices();
+     });
+  }
+
+  void stopTimer() {
+    timer?.cancel();
+  }
 }
+
+

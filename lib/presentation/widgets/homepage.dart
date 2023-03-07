@@ -8,6 +8,7 @@ import 'package:anuvad_app/presentation/widgets/common_components/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
@@ -19,13 +20,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Timer? timer;
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,35 +31,36 @@ class _HomePageState extends State<HomePage> {
           builder: (context, state) {
             switch (state) {
               case BluetoothState.poweredOn:
-                timer?.cancel();
-                Future.delayed(const Duration(seconds: 5),(){
-                  timer?.cancel();
-                });
-                BlocProvider.of<BluetoothScanCubit>(context)
-                    .scanForBluetoothDevices();
-                BlocProvider.of<BluetoothScanCubit>(context)
-                    .fetchBluetoothDevices();
-                timer = Timer.periodic(
-                  const Duration(milliseconds: 1000),
-                  (Timer t) {
                     BlocProvider.of<BluetoothScanCubit>(context)
-                        .fetchBluetoothDevices();
-                  },
-                );
+                        .reset();
                 return const FoundDevicesWidget();
               case BluetoothState.poweredOff:
-                return const Center(
-                  child: Text('Please turn on bluetooth'),
-                );
+                return const InfoScreen(text: "Please turn on your bluetooth");
               case BluetoothState.unknown:
-                return const Center(
-                  child: Text('Unknown bluetooth state'),
-                );
+                return const InfoScreen(
+                    text: "Please check your bluetooth settings");
               default:
                 break;
             }
             return Container();
           }),
+    );
+  }
+}
+
+class InfoScreen extends StatelessWidget {
+  final String text;
+  const InfoScreen({Key? key, required this.text}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: GoogleFonts.poppins(
+            color: Colors.black, fontSize: 20, fontWeight: FontWeight.w200),
+      ),
     );
   }
 }
@@ -76,40 +71,132 @@ class FoundDevicesWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BluetoothScanCubit, List<MidiDevice>>(
+      bloc: BlocProvider.of<BluetoothScanCubit>(context),
       builder: (context, state) => SafeArea(
         top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(
-              height: 20,
-            ),
-            const Padding(
-              padding: EdgeInsets.only(left: 20),
-              child: Text('Available to connect'),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Expanded(
-              child: ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: state.length,
-                itemBuilder: (context, index) {
-                  return MidiDeviceTile(
-                    midiDevice: state[index],
-                  );
-                },
+        child: state.isEmpty
+            ? const NoDevicesFoundWidget()
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 20),
+                    child: Text('Available to connect'),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: state.length,
+                      itemBuilder: (context, index) {
+                        return MidiDeviceTile(
+                          midiDevice: state[index],
+                        );
+                      },
+                    ),
+                  ),
+                  const BottomTextWidget(
+                      text: "Select the frame to connect"),
+                  const SizedBox(
+                    height: 30,
+                  )
+                ],
               ),
-            ),
-            const BottomTextWidget(text: "Select from the list to connect"),
-            const SizedBox(
-              height: 30,
-            )
-          ],
-        ),
       ),
+    );
+  }
+}
+
+class NoDevicesFoundWidget extends StatefulWidget {
+  const NoDevicesFoundWidget({Key? key}) : super(key: key);
+
+  @override
+  State<NoDevicesFoundWidget> createState() => _NoDevicesFoundWidgetState();
+}
+
+class _NoDevicesFoundWidgetState extends State<NoDevicesFoundWidget> {
+  bool isLoaderVisible = false;
+  Timer? timer;
+
+  retry() async {
+    if (mounted) {
+      setState(() {
+        isLoaderVisible = true;
+      });
+    }
+    BlocProvider.of<BluetoothScanCubit>(context).reset();
+    await Future.delayed(const Duration(seconds: 5));
+    if (mounted) {
+      setState(() {
+        isLoaderVisible = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () {
+              retry();
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                    height: 70,
+                    width: 70,
+                    child:  AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        child: isLoaderVisible
+                        ? const CircularProgressIndicator(
+                            color: Colors.black,
+                            strokeWidth: 2,
+                          )
+                        : Image.asset("assets/images/spinner.png"))),
+                const SizedBox(
+                  height: 10,
+                ),
+                    Opacity(
+                      opacity: isLoaderVisible ? 0 : 1,
+                      child: Text(
+                          "Retry Scanning",
+                          style: GoogleFonts.poppins(
+                              color: Colors.black,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w200),
+                        ),
+                    ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child: isLoaderVisible
+                ? BottomTextWidget(
+                    key: UniqueKey(), text: "Looking for frames . . .")
+                : BottomTextWidget(
+                    key: UniqueKey(), text: "No Devices Found. Please retry")),
+        const SizedBox(
+          height: 30,
+        )
+      ],
     );
   }
 }
@@ -117,7 +204,7 @@ class FoundDevicesWidget extends StatelessWidget {
 class BottomTextWidget extends StatelessWidget {
   final String text;
   final double fontSize;
-  const BottomTextWidget({Key? key, required this.text, this.fontSize = 23})
+  const BottomTextWidget({Key? key, required this.text, this.fontSize = 20})
       : super(key: key);
 
   @override
@@ -127,6 +214,7 @@ class BottomTextWidget extends StatelessWidget {
         padding: const EdgeInsets.only(left: 10, right: 10),
         child: Text(
           text,
+          textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
               color: Colors.black,
               fontSize: fontSize,
@@ -145,6 +233,7 @@ class MidiDeviceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
+        BlocProvider.of<BluetoothScanCubit>(context).stopTimer();
         Utils.showConnectSheet(context, midiDevice);
       },
       child: Padding(
@@ -161,34 +250,13 @@ class MidiDeviceTile extends StatelessWidget {
                       width: 20,
                     ),
                     Text(
-                      midiDevice.name,
+                      midiDevice.name.toUpperCase(),
                       style: GoogleFonts.poppins(
                           fontSize: 17, fontWeight: FontWeight.w300),
                       maxLines: 1,
                       overflow: TextOverflow.fade,
                     )
                   ],
-                ),
-                Text(
-                  midiDevice.id,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, fontWeight: FontWeight.w200),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                ),
-                Text(
-                  midiDevice.type,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, fontWeight: FontWeight.w200),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                ),
-                Text(
-                  midiDevice.connected.toString(),
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, fontWeight: FontWeight.w200),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
                 ),
               ],
             )),
@@ -376,38 +444,49 @@ class FramePage extends StatefulWidget {
 }
 
 class _FramePageState extends State<FramePage> {
+
+  @override
+  void initState() {
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
-    return Material(
-        child: Column(
-      mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        const SizedBox(
-          height: 10,
-        ),
-        FrameTitle(
-          title: widget.midiDevice.name,
-        ),
-        Expanded(
+    return WillPopScope(
+      onWillPop: () async {
+        BlocProvider.of<InstrumentCubit>(context).stop();
+        return true;
+      },
+      child: Material(
           child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              SizedBox(
-                height: 300,
-                child: Image.asset("assets/images/frame_active.png"),
-              ),
-              BottomTextWidget(
-                text: widget.instrumentName[0].toUpperCase() +
-                    widget.instrumentName.substring(1),
-                fontSize: 36,
-              )
-            ],
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          const SizedBox(
+            height: 10,
           ),
-        )
-      ],
-    ));
+          FrameTitle(
+            title: widget.midiDevice.name,
+          ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(
+                  height: 300,
+                  child: Image.asset("assets/images/frame_active.png"),
+                ),
+                BottomTextWidget(
+                  text: widget.instrumentName[0].toUpperCase() +
+                      widget.instrumentName.substring(1),
+                  fontSize: 36,
+                )
+              ],
+            ),
+          )
+        ],
+      )),
+    );
   }
 }
 
@@ -442,6 +521,13 @@ class ConnectButton extends StatelessWidget {
                   case MidiConnectionState.connecting:
                     return Lottie.asset("assets/lottie/loader.json");
                   case MidiConnectionState.disconnected:
+                  case MidiConnectionState.error:
+                    Fluttertoast.showToast(msg: "Error connecting to device. Please verify if the device is connected.");
+                    Navigator.of(context).pop();
+                    return const Center(
+                      child: Text('Connect',
+                          style: TextStyle(color: Colors.black, fontSize: 16)),
+                    );
                   case MidiConnectionState.unknown:
                     return const Center(
                       child: Text('Connect',
@@ -464,8 +550,8 @@ class FrameTitle extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: Text(
-        title,
-        style: GoogleFonts.poppins(fontSize: 25, fontWeight: FontWeight.w200),
+        title.toUpperCase(),
+        style: GoogleFonts.poppins(fontSize: 21, fontWeight: FontWeight.w200),
       ),
     );
   }

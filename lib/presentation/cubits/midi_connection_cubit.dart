@@ -11,15 +11,9 @@ class MidiConnectionCubit extends Cubit<MidiConnectionState>{
     await Future.delayed(const Duration(seconds: 2),);
     MidiHandler midiHandler = MidiHandler();
     await midiHandler.midi.connectToDevice(_midiDevice).then((value) {
-      print("<<<<<<<<<<<<<<<<<<<<<<<< connected >>>>>>>>>>>>>>>>>>>>>>>>>>>");
-      // midiHandler.midi.onMidiDataReceived!.listen((event) {
-      //   print("<<<<<<<<<<<<<<<<<<<<<<<< event >>>>>>>>>>>>>>>>>>>>>>>>>>>");
-      //   print(event);
-      //   print("<<<<<<<<<<<<<<<<<<<<<<<< event >>>>>>>>>>>>>>>>>>>>>>>>>>>");
-      // });
       emit(MidiConnectionState.connected);
     }).catchError((error){
-      emit(MidiConnectionState.disconnected);
+      emit(MidiConnectionState.error);
     });
   }
 
@@ -30,5 +24,6 @@ enum MidiConnectionState{
   connected,
   connecting,
   disconnected,
+  error,
   unknown
 }

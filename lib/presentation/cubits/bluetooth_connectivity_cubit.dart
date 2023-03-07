@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anuvad_app/midi_handler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
@@ -9,19 +11,20 @@ import 'package:flutter_midi_command/flutter_midi_command.dart';
 
 class BluetoothConnectionCubit extends Cubit<BluetoothState> {
   BluetoothConnectionCubit() : super(BluetoothState.unknown);
+  StreamSubscription<BluetoothState>? bluetoothConnectionStream;
+
+  setBluetoothState(BluetoothState state){
+    emit(state);
+  }
 
   void checkBluetoothConnection() async {
     final midiHandler = MidiHandler();
-    await midiHandler.midi.startBluetoothCentral();
-    midiHandler.midi.onBluetoothStateChanged.listen((event) {
-      if (event == BluetoothState.poweredOn) {
-        emit(BluetoothState.poweredOn);
-      } else if (event == BluetoothState.poweredOff) {
-        emit(BluetoothState.poweredOff);
-      }else{
-        emit(BluetoothState.unknown);
-      }
+    bluetoothConnectionStream?.cancel();
+    bluetoothConnectionStream = midiHandler.midi.onBluetoothStateChanged.listen((event) {
+      setBluetoothState(event);
     });
+    await midiHandler.midi.startBluetoothCentral();
+    await midiHandler.midi.waitUntilBluetoothIsInitialized();
   }
 }
 
