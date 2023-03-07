@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:anuvad_app/midi_handler.dart';
+import 'package:anuvad_app/utils/analytics.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
 
@@ -22,7 +23,11 @@ class BluetoothConnectionCubit extends Cubit<BluetoothState> {
     bluetoothConnectionStream?.cancel();
     bluetoothConnectionStream = midiHandler.midi.onBluetoothStateChanged.listen((event) {
       setBluetoothState(event);
+      AppAnalytics().logEvent("set_bluetooth_state",{
+        "state": event.name
+      });
     });
+
     await midiHandler.midi.startBluetoothCentral();
     await midiHandler.midi.waitUntilBluetoothIsInitialized();
   }

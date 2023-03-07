@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:anuvad_app/midi_handler.dart';
+import 'package:anuvad_app/utils/analytics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_midi/flutter_midi.dart';
@@ -32,15 +33,19 @@ class InstrumentCubit extends Cubit<InstrumentState> {
 
     switch (instrument) {
       case Instrument.sitar:
+        AppAnalytics().logEvent("prepare_sitar");
         await flutterMidi.prepare(sf2: sitarData, name: 'Sitar.SF2');
         break;
       case Instrument.guitar:
+        AppAnalytics().logEvent("prepare_guitar");
         await flutterMidi.prepare(sf2: guitarData, name: 'Guitar.SF2');
         break;
       case Instrument.piano:
+        AppAnalytics().logEvent("prepare_piano");
         await flutterMidi.prepare(sf2: pianoData, name: 'Piano.sf2');
         break;
       default:
+        AppAnalytics().logEvent("prepare_piano_default");
         await flutterMidi.prepare(sf2: pianoData, name: 'Piano.sf2');
         break;
     }
@@ -53,6 +58,9 @@ class InstrumentCubit extends Cubit<InstrumentState> {
     streamSubscription?.cancel();
     streamSubscription = midiHandler.midi.onMidiDataReceived?.listen((event) {
       flutterMidi.playMidiNote(midi: event.data[1]);
+      AppAnalytics().logEvent("play_midi_note",{
+        "note": event.data[1]
+      });
     });
   }
 

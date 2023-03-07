@@ -1,6 +1,7 @@
 import 'package:anuvad_app/presentation/cubits/bluetooth_connectivity_cubit.dart';
 import 'package:anuvad_app/presentation/cubits/bluetooth_scan_cubit.dart';
 import 'package:anuvad_app/presentation/widgets/homepage.dart';
+import 'package:anuvad_app/utils/analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
@@ -16,6 +17,7 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   @override
   void initState() {
+    AppAnalytics().logEvent("Splash_shown");
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       setCurrentValue();

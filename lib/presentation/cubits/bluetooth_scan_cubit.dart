@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:anuvad_app/midi_handler.dart';
+import 'package:anuvad_app/utils/analytics.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
 
@@ -25,11 +26,15 @@ class BluetoothScanCubit extends Cubit<List<MidiDevice>> {
     final devices = await midiHandler.midi.devices;
     if(devices != null){
       foundDevices = devices;
+      AppAnalytics().logEvent("found_devices",{
+        "devices": devices.toString()
+      });
     }
     emit(foundDevices);
   }
 
   reset() async {
+    AppAnalytics().logEvent("reset_execution");
     MidiHandler midiHandler = MidiHandler();
      midiHandler.midi.stopScanningForBluetoothDevices();
      timer?.cancel();

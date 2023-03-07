@@ -5,6 +5,7 @@ import 'package:anuvad_app/presentation/cubits/bluetooth_scan_cubit.dart';
 import 'package:anuvad_app/presentation/cubits/instrument_cubit.dart';
 import 'package:anuvad_app/presentation/cubits/midi_connection_cubit.dart';
 import 'package:anuvad_app/presentation/widgets/common_components/app_bar.dart';
+import 'package:anuvad_app/utils/analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
@@ -22,6 +23,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
 
   @override
+  void initState() {
+    AppAnalytics().logEvent("Home_page_shown");
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -31,12 +38,15 @@ class _HomePageState extends State<HomePage> {
           builder: (context, state) {
             switch (state) {
               case BluetoothState.poweredOn:
+                AppAnalytics().logEvent("Bluetooth_poweredOn");
                     BlocProvider.of<BluetoothScanCubit>(context)
                         .reset();
                 return const FoundDevicesWidget();
               case BluetoothState.poweredOff:
+                AppAnalytics().logEvent("Bluetooth_poweredOff");
                 return const InfoScreen(text: "Please turn on your bluetooth");
               case BluetoothState.unknown:
+                AppAnalytics().logEvent("Bluetooth_unknown");
                 return const InfoScreen(
                     text: "Please check your bluetooth settings");
               default:
@@ -233,6 +243,11 @@ class MidiDeviceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
+        AppAnalytics().logEvent("device_tapped",{
+          "device_name": midiDevice.name,
+          "device_id": midiDevice.id,
+          "device_type":midiDevice.type
+        });
         BlocProvider.of<BluetoothScanCubit>(context).stopTimer();
         Utils.showConnectSheet(context, midiDevice);
       },
@@ -267,6 +282,11 @@ class MidiDeviceTile extends StatelessWidget {
 
 class Utils {
   static void showConnectSheet(BuildContext context, MidiDevice midiDevice) {
+    AppAnalytics().logEvent("Connect_sheet_shown",{
+      "device_name": midiDevice.name,
+      "device_id": midiDevice.id,
+      "device_type":midiDevice.type
+    });
     showModalBottomSheet(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
@@ -341,6 +361,11 @@ class _ConnectSheetWidgetState extends State<ConnectSheetWidget> {
           ),
           ConnectButton(
             onTap: () {
+              AppAnalytics().logEvent("Connect_tapped",{
+                "device_name": widget.midiDevice.name,
+                "device_id": widget.midiDevice.id,
+                "device_type":widget.midiDevice.type
+              });
               BlocProvider.of<MidiConnectionCubit>(context)
                   .startMidiConnection();
             },
@@ -399,6 +424,9 @@ class InstrumentTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {
+        AppAnalytics().logEvent("Instrument_tapped",{
+          "type": instrument.name,
+        });
         BlocProvider.of<InstrumentCubit>(context).use(instrument);
         Navigator.of(context).push(MaterialPageRoute(
             builder: (_) => FramePage(
@@ -447,6 +475,7 @@ class _FramePageState extends State<FramePage> {
 
   @override
   void initState() {
+    AppAnalytics().logEvent("Frame_page_shown");
     super.initState();
   }
   @override

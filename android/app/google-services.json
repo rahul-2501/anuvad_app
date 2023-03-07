@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "342147376446",
+    "project_id": "anuvad-7cf86",
+    "storage_bucket": "anuvad-7cf86.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:342147376446:android:e3c8b75ce93d5f6fae386f",
+        "android_client_info": {
+          "package_name": "com.example.anuvad_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "342147376446-m2b0pu2pngk4inadolu7bkb6tbcq3jem.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7etXX-7QNEhNuEe1pQa8ixDI33KIrgAY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "342147376446-m2b0pu2pngk4inadolu7bkb6tbcq3jem.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
