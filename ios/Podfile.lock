@@ -6,16 +6,25 @@ PODS:
     - Flutter
   - flutter_native_splash (0.0.1):
     - Flutter
+  - fluttertoast (0.0.2):
+    - Flutter
+    - Toast
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - Toast (4.0.0)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_midi (from `.symlinks/plugins/flutter_midi/ios`)
   - flutter_midi_command (from `.symlinks/plugins/flutter_midi_command/ios`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
-  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
+  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+
+SPEC REPOS:
+  trunk:
+    - Toast
 
 EXTERNAL SOURCES:
   Flutter:
@@ -26,16 +35,20 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_midi_command/ios"
   flutter_native_splash:
     :path: ".symlinks/plugins/flutter_native_splash/ios"
+  fluttertoast:
+    :path: ".symlinks/plugins/fluttertoast/ios"
   path_provider_foundation:
-    :path: ".symlinks/plugins/path_provider_foundation/ios"
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
 
 SPEC CHECKSUMS:
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_midi: 4fe7280cf156c668fe92445f384b1bc440473cdb
   flutter_midi_command: 760f0ec4b7c6d3034982f6045e878d9b7d01674e
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
-  path_provider_foundation: 37748e03f12783f9de2cb2c4eadfaa25fe6d4852
+  fluttertoast: eb263d302cc92e04176c053d2385237e9f43fad0
+  path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
+  Toast: 91b396c56ee72a5790816f40d3a94dd357abc196
 
 PODFILE CHECKSUM: 775997f741c536251164e3eacf6e34abf2eb7a17
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.12.1

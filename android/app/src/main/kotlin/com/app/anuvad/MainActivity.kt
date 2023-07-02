@@ -1,4 +1,4 @@
-package com.example.anuvad_app
+package com.app.anuvad
 
 import io.flutter.embedding.android.FlutterActivity
 
